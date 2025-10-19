@@ -27,8 +27,8 @@ public:
 	UPROPERTY(EditAnywhere, Category = Input)
 	UInputMappingContext* InputMapping;
 
-	UPROPERTY(EditAnywhere, Category = Input)
-	UInputMappingContext* InputMappingMouse;
+	// UPROPERTY(EditAnywhere, Category = Input)
+	// UInputMappingContext* InputMappingMouse;
 
 	UPROPERTY(EditAnywhere, Category = Input)
 	UInputAction* MoveAction;
@@ -36,8 +36,8 @@ public:
 	UPROPERTY(EditAnywhere, Category = Input)
 	UInputAction* LookAction;
 
-	UPROPERTY(EditAnywhere, Category = Input)
-	UInputAction* MouseLookAction;
+	// UPROPERTY(EditAnywhere, Category = Input)
+	// UInputAction* MouseLookAction;
 
 	UPROPERTY(EditAnywhere, Category = Input)
 	UInputAction* JumpAction;

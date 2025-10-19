@@ -30,7 +30,7 @@ ABlasterCharacter::ABlasterCharacter()
 
 	// Note: For faster iteration times these variables, and many more, can be tweaked in the Character Blueprint
 	// instead of recompiling to adjust them
-	GetCharacterMovement()->JumpZVelocity = 700.f;
+	GetCharacterMovement()->JumpZVelocity = 1000.f; // Jump velocity lmao 1000f is pretty high
 	GetCharacterMovement()->AirControl = 0.35f;
 	GetCharacterMovement()->MaxWalkSpeed = 500.f;
 	GetCharacterMovement()->MinAnalogWalkSpeed = 20.f;
@@ -63,7 +63,7 @@ void ABlasterCharacter::Move(const FInputActionValue& Value)
 {
 	if (GEngine)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Green, FString::Printf(TEXT("Move input: %s"), *Value.ToString()));
+		GEngine->AddOnScreenDebugMessage(3, 15.0f, FColor::Green, FString::Printf(TEXT("Move input: %s"), *Value.ToString()));
 	}
 	// input is a Vector2D
 	FVector2D MovementVector = Value.Get<FVector2D>();
@@ -90,6 +90,7 @@ void ABlasterCharacter::Look(const FInputActionValue& Value)
 {
 	if (GEngine)
 	{
+		// Custom key of 2 so it doesn't overwrite other messages
 		GEngine->AddOnScreenDebugMessage(2, 15.0f, FColor::Green, FString::Printf(TEXT("Look input: %s"), *Value.ToString()));
 	}
 	// input is a Vector2D
@@ -133,12 +134,12 @@ void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 			//https://dev.epicgames.com/documentation/en-us/unreal-engine/enhanced-input-in-unreal-engine
 			// When you add an Input Mapping Context to the Enhanced Input subsystem, you can also give it priority. If you have multiple contexts mapped to the same Input Action, then, when the Input Action is triggered, the context with the highest priority will be considered and the others ignored.
 			// Give higher priority to mouse look thank using gamepad
-			Subsystem->AddMappingContext(InputMappingMouse, 1);
+			//Subsystem->AddMappingContext(InputMappingMouse, 1);
 		}
 	}
 
 	// Set up action bindings
-	// input listeners will callback our function
+	// The input action listeners will callback our function we bind when the event is triggered
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
 	{
 		// Jumping
@@ -150,7 +151,7 @@ void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 
 		// Looking
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ABlasterCharacter::Look);
-		EnhancedInputComponent->BindAction(MouseLookAction, ETriggerEvent::Triggered, this, &ABlasterCharacter::Look);
+		// EnhancedInputComponent->BindAction(MouseLookAction, ETriggerEvent::Triggered, this, &ABlasterCharacter::Look);
 	}
 	else
 	{
