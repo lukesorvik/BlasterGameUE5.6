@@ -30,7 +30,7 @@ ABlasterCharacter::ABlasterCharacter()
 
 	// Note: For faster iteration times these variables, and many more, can be tweaked in the Character Blueprint
 	// instead of recompiling to adjust them
-	GetCharacterMovement()->JumpZVelocity = 1000.f; // Jump velocity lmao 1000f is pretty high
+	GetCharacterMovement()->JumpZVelocity = 600.f; // Jump velocity lmao 1000f is pretty high
 	GetCharacterMovement()->AirControl = 0.35f;
 	GetCharacterMovement()->MaxWalkSpeed = 500.f;
 	GetCharacterMovement()->MinAnalogWalkSpeed = 20.f;
@@ -61,10 +61,10 @@ void ABlasterCharacter::BeginPlay()
 
 void ABlasterCharacter::Move(const FInputActionValue& Value)
 {
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(3, 15.0f, FColor::Green, FString::Printf(TEXT("Move input: %s"), *Value.ToString()));
-	}
+	// if (GEngine)
+	// {
+	// 	GEngine->AddOnScreenDebugMessage(3, 15.0f, FColor::Green, FString::Printf(TEXT("Move input: %s"), *Value.ToString()));
+	// }
 	// input is a Vector2D
 	FVector2D MovementVector = Value.Get<FVector2D>();
 
@@ -88,11 +88,11 @@ void ABlasterCharacter::Move(const FInputActionValue& Value)
 
 void ABlasterCharacter::Look(const FInputActionValue& Value)
 {
-	if (GEngine)
-	{
-		// Custom key of 2 so it doesn't overwrite other messages
-		GEngine->AddOnScreenDebugMessage(2, 15.0f, FColor::Green, FString::Printf(TEXT("Look input: %s"), *Value.ToString()));
-	}
+	// if (GEngine)
+	// {
+	// 	// Custom key of 2 so it doesn't overwrite other messages
+	// 	GEngine->AddOnScreenDebugMessage(2, 15.0f, FColor::Green, FString::Printf(TEXT("Look input: %s"), *Value.ToString()));
+	// }
 	// input is a Vector2D
 	FVector2D LookAxisVector = Value.Get<FVector2D>();
 
