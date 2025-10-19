@@ -30,7 +30,7 @@ ABlasterCharacter::ABlasterCharacter()
 
 	// Note: For faster iteration times these variables, and many more, can be tweaked in the Character Blueprint
 	// instead of recompiling to adjust them
-	GetCharacterMovement()->JumpZVelocity = 600.f; // Jump velocity lmao 1000f is pretty high
+	GetCharacterMovement()->JumpZVelocity = 500.f; // Jump velocity lmao 1000f is pretty high
 	GetCharacterMovement()->AirControl = 0.35f;
 	GetCharacterMovement()->MaxWalkSpeed = 500.f;
 	GetCharacterMovement()->MinAnalogWalkSpeed = 20.f;
