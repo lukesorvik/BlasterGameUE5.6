@@ -4,6 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "InputMappingContext.h"
+
+
 #include "BlasterCharacter.generated.h"
 
 UCLASS()
@@ -20,11 +23,32 @@ public:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+	UPROPERTY(EditAnywhere, Category = Input)
+	UInputMappingContext* InputMapping;
+
+	UPROPERTY(EditAnywhere, Category = Input)
+	UInputMappingContext* InputMappingMouse;
+
+	UPROPERTY(EditAnywhere, Category = Input)
+	UInputAction* MoveAction;
+
+	UPROPERTY(EditAnywhere, Category = Input)
+	UInputAction* LookAction;
+
+	UPROPERTY(EditAnywhere, Category = Input)
+	UInputAction* MouseLookAction;
+
+	UPROPERTY(EditAnywhere, Category = Input)
+	UInputAction* JumpAction;
 	
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+	void Move(const FInputActionValue& Value);
+	void Look(const FInputActionValue& Value);
 
 
 private:
