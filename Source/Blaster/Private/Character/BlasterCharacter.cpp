@@ -31,7 +31,7 @@ ABlasterCharacter::ABlasterCharacter()
 
 	// Note: For faster iteration times these variables, and many more, can be tweaked in the Character Blueprint
 	// instead of recompiling to adjust them
-	GetCharacterMovement()->JumpZVelocity = 500.f; // Jump velocity lmao 1000f is pretty high
+	GetCharacterMovement()->JumpZVelocity = 600.f; // Jump velocity lmao 1000f is pretty high
 	GetCharacterMovement()->AirControl = 0.35f;
 	GetCharacterMovement()->MaxWalkSpeed = 500.f;
 	GetCharacterMovement()->MinAnalogWalkSpeed = 20.f;
@@ -40,7 +40,7 @@ ABlasterCharacter::ABlasterCharacter()
 
 	// Create a subobject of this class named CameraBoom with the type USpringArmComponent
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
-	CameraBoom->SetupAttachment(GetMesh()); // Attach to the mesh
+	CameraBoom->SetupAttachment(RootComponent);
 	CameraBoom->TargetArmLength = 600.f; // The camera follows at this distance behind the character
 	CameraBoom->bUsePawnControlRotation = true; // Rotate the arm based on the controller rotations
 
@@ -55,7 +55,48 @@ ABlasterCharacter::ABlasterCharacter()
 	// Setup Overhead text box
 	OverHeadWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("OverHeadWidget"));
 	OverHeadWidget->SetupAttachment(RootComponent); // Attach to root
+
+	// enable crouching
+	GetMovementComponent()->GetNavAgentPropertiesRef().bCanCrouch = true;
+}
+
+void ABlasterCharacter::vclip()
+{
+	UCharacterMovementComponent* MoveComp = GetCharacterMovement();
 	
+	if (MoveComp)
+	{
+		// Toggle VClip
+		if (bIsVClipEnabled)
+		{
+			// Disable VClip
+			bIsVClipEnabled = false;
+
+			// Restore capsule collision
+			GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+			GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
+
+			// Restore camera collision
+			CameraBoom->bDoCollisionTest = true;
+
+			// Restore movement
+			MoveComp->SetMovementMode(MOVE_Walking);
+			
+			if (GEngine)
+				GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, TEXT("Flying Disabled"));
+		}
+		else
+		{
+			// Enable vclip
+			bIsVClipEnabled = true;
+			GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Ignore);
+			CameraBoom->bDoCollisionTest = false;
+			MoveComp->SetMovementMode(MOVE_Flying);
+			if (GEngine)
+				GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green, TEXT("Flying Enabled"));
+		}
+	}
 }
 
 // Called when the game starts or when spawned
@@ -111,6 +152,59 @@ void ABlasterCharacter::Look(const FInputActionValue& Value)
 }
 
 
+void ABlasterCharacter::JumpHeld(const FInputActionValue& Value)
+{
+	if (bIsVClipEnabled)
+	{
+		// Fly up
+		FVector NewLocation = GetActorLocation();
+		NewLocation.Z += 5.f; // Move up by 100 units
+		SetActorLocation(NewLocation);
+	}
+}
+
+void ABlasterCharacter::StartCrouch(const FInputActionValue& Value)
+{
+	// if (GEngine)
+	// {
+	// 	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Green, TEXT("Crouch Pressed"));
+	// }
+	if (GetCharacterMovement()->IsFalling())
+	{
+		return;
+	}
+	CameraBoom->SocketOffset.Z = -20.f; // Adjust as needed
+	Super::Crouch();
+}
+
+void ABlasterCharacter::StopCrouch(const FInputActionValue& Value)
+{
+	// if (GEngine)
+	// {
+	// 	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Green, TEXT("Crouch Released"));
+	// }
+	CameraBoom->SocketOffset.Z = 0.f;
+	if (GetCharacterMovement()->IsFalling())
+	{
+		return;
+	}
+	Super::UnCrouch();
+}
+
+
+
+void ABlasterCharacter::CrouchHeld(const FInputActionValue& Value)
+{
+	if (bIsVClipEnabled)
+	{
+		// Fly down
+		FVector NewLocation = GetActorLocation();
+		NewLocation.Z -= 5.f; // Move up by 100 units
+		SetActorLocation(NewLocation);
+	}
+}
+
+
 // Called every frame
 void ABlasterCharacter::Tick(float DeltaTime)
 {
@@ -151,13 +245,20 @@ void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		// Jumping
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Ongoing, this, &ABlasterCharacter::JumpHeld);
+		
 
 		// Moving
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ABlasterCharacter::Move);
 
 		// Looking
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ABlasterCharacter::Look);
-		// EnhancedInputComponent->BindAction(MouseLookAction, ETriggerEvent::Triggered, this, &ABlasterCharacter::Look);
+
+		// Crouching
+		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &ABlasterCharacter::StartCrouch);
+		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Completed, this,  &ABlasterCharacter::StopCrouch);
+		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Ongoing, this, &ABlasterCharacter::CrouchHeld);
+		
 	}
 	else
 	{

@@ -39,5 +39,7 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		//The Size() method calculates the magnitude of this vector. If the magnitude is greater than 0.f, it means the character is actively accelerating, and the boolean bIsAccelerating is set to true. Otherwise, it is set to false.
 		// Ternary operator instead of if else
 		bIsAccelerating = BlasterCharacter->GetCharacterMovement()->GetCurrentAcceleration().Size() > 0.f ? true : false;
+
+		bIsCrouching = BlasterCharacter->bIsCrouched;
 	}
 }

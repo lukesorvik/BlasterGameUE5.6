@@ -27,8 +27,6 @@ public:
 	UPROPERTY(EditAnywhere, Category = Input)
 	UInputMappingContext* InputMapping;
 
-	// UPROPERTY(EditAnywhere, Category = Input)
-	// UInputMappingContext* InputMappingMouse;
 
 	UPROPERTY(EditAnywhere, Category = Input)
 	UInputAction* MoveAction;
@@ -36,11 +34,15 @@ public:
 	UPROPERTY(EditAnywhere, Category = Input)
 	UInputAction* LookAction;
 
-	// UPROPERTY(EditAnywhere, Category = Input)
-	// UInputAction* MouseLookAction;
+	UPROPERTY(EditAnywhere, Category = Input)
+	UInputAction* CrouchAction;
 
 	UPROPERTY(EditAnywhere, Category = Input)
 	UInputAction* JumpAction;
+
+	// Exec means its called from the in game console
+	UFUNCTION(Exec)
+	void vclip();
 	
 
 protected:
@@ -49,6 +51,12 @@ protected:
 
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
+	void JumpHeld(const FInputActionValue& Value);
+
+	void StartCrouch(const FInputActionValue& Value);
+	void StopCrouch(const FInputActionValue& Value);
+	void CrouchHeld(const FInputActionValue& Value);
+	
 
 
 private:
@@ -61,6 +69,8 @@ private:
 	//  meta = (AllowPrivateAccess = "true") allows private member to be visible in editor
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class UWidgetComponent* OverHeadWidget;
+
+	bool bIsVClipEnabled = false;
 	
 public:	
 
