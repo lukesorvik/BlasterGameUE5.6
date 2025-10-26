@@ -10,6 +10,7 @@
 #include "Components/CapsuleComponent.h"
 #include "Components/WidgetComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values
 ABlasterCharacter::ABlasterCharacter()
@@ -58,6 +59,9 @@ ABlasterCharacter::ABlasterCharacter()
 
 	// enable crouching
 	GetMovementComponent()->GetNavAgentPropertiesRef().bCanCrouch = true;
+
+	// // Enable replication
+	// bReplicates = true;
 }
 
 void ABlasterCharacter::vclip()
@@ -71,14 +75,14 @@ void ABlasterCharacter::vclip()
 		{
 			// Disable VClip
 			bIsVClipEnabled = false;
-
+	
 			// Restore capsule collision
 			GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 			GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
-
+	
 			// Restore camera collision
 			CameraBoom->bDoCollisionTest = true;
-
+	
 			// Restore movement
 			MoveComp->SetMovementMode(MOVE_Walking);
 			
@@ -97,7 +101,19 @@ void ABlasterCharacter::vclip()
 				GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green, TEXT("Flying Enabled"));
 		}
 	}
+
+	//
+	// ServerSetVClip_Implementation(bIsVClipEnabled);
+	
 }
+
+// void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+// {
+// 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+//
+// 	// For Vclip replication
+// 	DOREPLIFETIME(ABlasterCharacter, bIsVClipEnabled);
+// }
 
 // Called when the game starts or when spawned
 void ABlasterCharacter::BeginPlay()
@@ -157,18 +173,16 @@ void ABlasterCharacter::JumpHeld(const FInputActionValue& Value)
 	if (bIsVClipEnabled)
 	{
 		// Fly up
-		FVector NewLocation = GetActorLocation();
-		NewLocation.Z += 5.f; // Move up by 100 units
-		SetActorLocation(NewLocation);
+		FVector FlyDirection = FVector::UpVector; // Default to upward movement
+		float FlySpeed = 5.f; // Default fly speed
+
+		// Add movement input in Z axis
+		AddMovementInput(FlyDirection, FlySpeed);
 	}
 }
 
 void ABlasterCharacter::StartCrouch(const FInputActionValue& Value)
 {
-	// if (GEngine)
-	// {
-	// 	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Green, TEXT("Crouch Pressed"));
-	// }
 	if (GetCharacterMovement()->IsFalling())
 	{
 		return;
@@ -179,10 +193,6 @@ void ABlasterCharacter::StartCrouch(const FInputActionValue& Value)
 
 void ABlasterCharacter::StopCrouch(const FInputActionValue& Value)
 {
-	// if (GEngine)
-	// {
-	// 	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Green, TEXT("Crouch Released"));
-	// }
 	CameraBoom->SocketOffset.Z = 0.f;
 	if (GetCharacterMovement()->IsFalling())
 	{
@@ -198,11 +208,43 @@ void ABlasterCharacter::CrouchHeld(const FInputActionValue& Value)
 	if (bIsVClipEnabled)
 	{
 		// Fly down
-		FVector NewLocation = GetActorLocation();
-		NewLocation.Z -= 5.f; // Move up by 100 units
-		SetActorLocation(NewLocation);
+		FVector FlyDirection = FVector::DownVector; // Default to upward movement
+		float FlySpeed = 5.f; // Default fly speed
+
+		// Add movement input in Z axis
+		AddMovementInput(FlyDirection, FlySpeed);
 	}
 }
+
+// void ABlasterCharacter::ServerSetVClip_Implementation(bool bIsVClipEnabledFromClient)
+// {
+// 	UCharacterMovementComponent* MoveComp = GetCharacterMovement();
+//
+// 	if (!MoveComp) return;
+//
+// 	if (bIsVClipEnabledFromClient == false)
+// 	{
+// 		// Enable VClip
+// 		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+// 		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Ignore);
+// 		CameraBoom->bDoCollisionTest = false;
+// 		MoveComp->SetMovementMode(MOVE_Flying);
+//
+// 		if (GEngine)
+// 			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green, TEXT("Flying Enabled"));
+// 	}
+// 	else
+// 	{
+// 		// Disable VClip
+// 		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+// 		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
+// 		CameraBoom->bDoCollisionTest = true;
+// 		MoveComp->SetMovementMode(MOVE_Walking);
+//
+// 		if (GEngine)
+// 			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, TEXT("Flying Disabled"));
+// 	}
+// }
 
 
 // Called every frame
