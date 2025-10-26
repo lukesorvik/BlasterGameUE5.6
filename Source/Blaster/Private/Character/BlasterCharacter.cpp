@@ -102,18 +102,9 @@ void ABlasterCharacter::vclip()
 		}
 	}
 
-	//
-	// ServerSetVClip_Implementation(bIsVClipEnabled);
 	
 }
 
-// void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
-// {
-// 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-//
-// 	// For Vclip replication
-// 	DOREPLIFETIME(ABlasterCharacter, bIsVClipEnabled);
-// }
 
 // Called when the game starts or when spawned
 void ABlasterCharacter::BeginPlay()
@@ -215,37 +206,6 @@ void ABlasterCharacter::CrouchHeld(const FInputActionValue& Value)
 		AddMovementInput(FlyDirection, FlySpeed);
 	}
 }
-
-// void ABlasterCharacter::ServerSetVClip_Implementation(bool bIsVClipEnabledFromClient)
-// {
-// 	UCharacterMovementComponent* MoveComp = GetCharacterMovement();
-//
-// 	if (!MoveComp) return;
-//
-// 	if (bIsVClipEnabledFromClient == false)
-// 	{
-// 		// Enable VClip
-// 		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-// 		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Ignore);
-// 		CameraBoom->bDoCollisionTest = false;
-// 		MoveComp->SetMovementMode(MOVE_Flying);
-//
-// 		if (GEngine)
-// 			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green, TEXT("Flying Enabled"));
-// 	}
-// 	else
-// 	{
-// 		// Disable VClip
-// 		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-// 		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
-// 		CameraBoom->bDoCollisionTest = true;
-// 		MoveComp->SetMovementMode(MOVE_Walking);
-//
-// 		if (GEngine)
-// 			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, TEXT("Flying Disabled"));
-// 	}
-// }
-
 
 // Called every frame
 void ABlasterCharacter::Tick(float DeltaTime)

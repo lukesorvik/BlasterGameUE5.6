@@ -44,7 +44,6 @@ public:
 	UFUNCTION(Exec)
 	void vclip();
 
-	// virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
 protected:
 	// Called when the game starts or when spawned
@@ -57,9 +56,6 @@ protected:
 	void StartCrouch(const FInputActionValue& Value);
 	void StopCrouch(const FInputActionValue& Value);
 	void CrouchHeld(const FInputActionValue& Value);
-	//
-	// UFUNCTION(Server, Reliable)
-	// void ServerSetVClip(bool bIsVClipEnabled);
 
 
 private:
@@ -73,7 +69,6 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class UWidgetComponent* OverHeadWidget;
 
-	// UPROPERTY(Replicated)
 	bool bIsVClipEnabled = false;
 	
 public:	

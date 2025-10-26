@@ -4,6 +4,7 @@
 #include "HUD/OverHeadWidget.h"
 
 #include "Components/TextBlock.h"
+#include "GameFramework/PlayerState.h"
 
 void UOverHeadWidget::SetDisplayText(const FString& TextToDisplay)
 {
@@ -16,10 +17,9 @@ void UOverHeadWidget::SetDisplayText(const FString& TextToDisplay)
 void UOverHeadWidget::ShowPlayerNetRole(APawn* InPawn)
 {
 
-	// Remote role = role on the server
-	// ENetRole RemoteRole = InPawn->GetRemoteRole();
+	// ENetRole LocalRole = InPawn->GetLocalRole();
 	// FString Role;
-	// switch (RemoteRole)
+	// switch (LocalRole)
 	// {
 	// case ENetRole::ROLE_Authority:
 	// 	Role = "Authority";
@@ -38,39 +38,22 @@ void UOverHeadWidget::ShowPlayerNetRole(APawn* InPawn)
 	// 	break;
 	// }
 	//
-	// FString RemoteRoleString = FString::Printf(TEXT("Local Role: %s"), *Role);
-	// SetDisplayText(RemoteRoleString);
-	
-	ENetRole LocalRole = InPawn->GetLocalRole();
-	FString Role;
-	switch (LocalRole)
-	{
-	case ENetRole::ROLE_Authority:
-		Role = "Authority";
-		break;
-	case ENetRole::ROLE_AutonomousProxy:
-		Role = "Autonomous Proxy";
-		break;
-	case ENetRole::ROLE_SimulatedProxy:
-		Role = "Simulated Proxy";
-		break;
-	case ENetRole::ROLE_None:
-		Role = "None";
-		break;
-	default:
-		Role = "Unknown";
-		break;
-	}
+	// FString LocalRoleString = FString::Printf(TEXT("Local Role: %s"), *Role);
+	// SetDisplayText(LocalRoleString);
 
-	FString LocalRoleString = FString::Printf(TEXT("Local Role: %s"), *Role);
-	SetDisplayText(LocalRoleString);
+	if (!InPawn) return;
+
+	APlayerState* PlayerState = InPawn->GetPlayerState();
+	if (!PlayerState) return;
+
+	// Get the player's name (Steam name if using Steam)
+	FString PlayerName = PlayerState->GetPlayerName();
+
+	// Display the name
+	SetDisplayText(PlayerName);
 }
 
-// void UOverHeadWidget::OnLevelRemovedFromWorld(ULevel* InLevel, UWorld* InWorld)
-// {
-// 	Super::OnLevelRemovedFromWorld(InLevel, InWorld);
-// 	RemoveFromParent();
-// }
+
 void UOverHeadWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
