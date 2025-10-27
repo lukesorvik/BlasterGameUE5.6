@@ -71,7 +71,6 @@ ABlasterCharacter::ABlasterCharacter()
 	// Initialize combat component
 	Combat = CreateDefaultSubobject<UCombatComponent>(TEXT("CombatComponent"));
 	Combat->SetIsReplicated(true);
-	
 }
 
 
@@ -87,71 +86,76 @@ void ABlasterCharacter::vclip()
 	if (GEngine)
 	{
 		const FString Authority = HasAuthority() ? TEXT("Server") : TEXT("Client");
-		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("VClip called - %s"), *Authority));
+		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow,
+		                                 FString::Printf(TEXT("VClip called - %s"), *Authority));
 	}
 
-	if (!HasAuthority())
-	{
-		// If client enable vClip locally
-		EnableVclip();
-	}
-	
 	// Either Case of Client or server calling this function: call RPC to Server
 	// I think if we are server it just doesnt send the rpc and executes on the server
 	ServerVClipRPC();
 }
 
 
-void ABlasterCharacter::EnableVclip()
+void ABlasterCharacter::ServerVClipRPC_Implementation()
 {
+	if (GEngine)
+	{
+		const FString Authority = HasAuthority() ? TEXT("Server") : TEXT("Client");
+		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow,
+		                                 FString::Printf(TEXT("RPC called - %s"), *Authority));
+	}
+
+	if (bIsVClipEnabled)
+	{
+		if (GEngine)
+			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, TEXT("Flying Disabled"));
+		bIsVClipEnabled = false;
+	}
+	else
+	{
+		if (GEngine)
+			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green, TEXT("Flying Enabled"));
+		bIsVClipEnabled = true;
+	}
+
+	EnableVclipSettings();
+}
+
+// Toggle player settings depending on Vclip
+void ABlasterCharacter::EnableVclipSettings()
+{
+	if (GEngine)
+	{
+		const FString Authority = HasAuthority() ? TEXT("Server") : TEXT("Client");
+		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow,
+		                                 FString::Printf(TEXT("EnableVclipSettings called - %s"), *Authority));
+	}
+
 	UCharacterMovementComponent* MoveComp = GetCharacterMovement();
 
 	if (MoveComp)
 	{
-		// Toggle VClip
-		if (bIsVClipEnabled)
+		if (bIsVClipEnabled == false)
 		{
-			// Disable VClip
-			bIsVClipEnabled = false;
-
 			// Restore capsule collision
 			GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 			GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
-
 			// Restore camera collision
 			CameraBoom->bDoCollisionTest = true;
-
 			// Restore movement
 			MoveComp->SetMovementMode(MOVE_Walking);
-
-			if (GEngine)
-				GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, TEXT("Flying Disabled"));
 		}
 		else
 		{
 			// Enable vclip
-			bIsVClipEnabled = true;
 			GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 			GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Ignore);
 			CameraBoom->bDoCollisionTest = false;
 			MoveComp->SetMovementMode(MOVE_Flying);
-			if (GEngine)
-				GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green, TEXT("Flying Enabled"));
 		}
 	}
 }
 
-void ABlasterCharacter::ServerVClipRPC_Implementation()
-{
-
-	if (GEngine)
-	{
-		const FString Authority = HasAuthority() ? TEXT("Server") : TEXT("Client");
-		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("RPC called - %s"), *Authority));
-	}
-	
-	EnableVclip();
-}
 
 void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
 {
@@ -166,7 +170,9 @@ void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimePropert
 	// Only replicate to the client that owns the blaster character (COND_OWERONLy == I OWN THE PAWN)
 	DOREPLIFETIME_CONDITION(ABlasterCharacter, OverlappingWeapon, COND_OwnerOnly)
 
-	DOREPLIFETIME_CONDITION(ABlasterCharacter, bIsVClipEnabled, COND_OwnerOnly)
+	// Replicate this variable to everyone not just the person who owns the pawn
+	// So if person b's variable changes everyone knows about it
+	DOREPLIFETIME(ABlasterCharacter, bIsVClipEnabled)
 }
 
 void ABlasterCharacter::PostInitializeComponents()
@@ -189,7 +195,6 @@ void ABlasterCharacter::BeginPlay()
 
 void ABlasterCharacter::Move(const FInputActionValue& Value)
 {
-
 	// input is a Vector2D
 	FVector2D MovementVector = Value.Get<FVector2D>();
 
@@ -277,7 +282,7 @@ void ABlasterCharacter::EquipButtonPressed(const FInputActionValue& Value)
 	if (Combat && HasAuthority() && OverlappingWeapon)
 	{
 		// If combat component is valid && we are the server && and OverlappingWeapon Exists
-		
+
 		Combat->EquipWeapon(OverlappingWeapon);
 	}
 	else if (Combat && !HasAuthority() && OverlappingWeapon)
@@ -285,7 +290,6 @@ void ABlasterCharacter::EquipButtonPressed(const FInputActionValue& Value)
 		// We are not the server so send the rpc
 		ServerEquipButtonPressed();
 	}
-	
 }
 
 void ABlasterCharacter::OnRep_OverlappingWeapon(AWeapon* LastWeaponBeforeReplication)
@@ -313,14 +317,27 @@ void ABlasterCharacter::OnRep_OverlappingWeapon(AWeapon* LastWeaponBeforeReplica
 	}
 }
 
+// Called on client after server updates Vclip bool for a character
+// Update local settings on the client depending on a pawn's vclip bool
+void ABlasterCharacter::OnRep_vClip()
+{
+	if (GEngine)
+	{
+		const FString Authority = HasAuthority() ? TEXT("Server") : TEXT("Client");
+		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow,
+										 FString::Printf(TEXT("OnRep_Vclip Called - %s"), *Authority));
+	}
+	EnableVclipSettings();
+}
+
 
 // OnSphereOverlapp only gets called on the server, which is calling this function
 // Therefore the machine running this code IS THE SERVER
 // ONLY RUN ON THE SERVER
 // BECAUSE OF THIS WE NEED TO ADD LOGIC THAT WOULD BE OnRep_OverlappingWeapon HERE, BUT ONLY FOR THE SERVER
 // SINCE OnRep_OverlappingWeapon WILL NOT BE CALLED ON THE SERVER
-void ABlasterCharacter::SetOverlappingWeapon(AWeapon* Weapon) {
-	
+void ABlasterCharacter::SetOverlappingWeapon(AWeapon* Weapon)
+{
 	if (OverlappingWeapon)
 	{
 		// If the OverlappingWeapon = True, that means we are about to replace it with null
@@ -338,7 +355,6 @@ void ABlasterCharacter::SetOverlappingWeapon(AWeapon* Weapon) {
 		// since replication only works server->client
 		OverlappingWeapon->ShowPickupWidget(true);
 	}
-	
 }
 
 void ABlasterCharacter::ServerEquipButtonPressed_Implementation()
@@ -400,8 +416,8 @@ void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Ongoing, this, &ABlasterCharacter::CrouchHeld);
 
 		//Equip
-		EnhancedInputComponent->BindAction(EquipAction, ETriggerEvent::Started, this, &ABlasterCharacter::EquipButtonPressed);
-		
+		EnhancedInputComponent->BindAction(EquipAction, ETriggerEvent::Started, this,
+		                                   &ABlasterCharacter::EquipButtonPressed);
 	}
 	else
 	{

@@ -46,7 +46,7 @@ public:
 	// Exec means its called from the in game console
 	UFUNCTION(Exec)
 	void vclip();
-	void EnableVclip();
+	void EnableVclipSettings();
 
 	// #Step 2: Need to overide in order to replicate
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
@@ -79,7 +79,7 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class UWidgetComponent* OverHeadWidget;
 
-	UPROPERTY(Replicated)
+	UPROPERTY(ReplicatedUsing = OnRep_vClip)
 	bool bIsVClipEnabled = false;
 
 	// #Step 1: uproperty replicated to replicate a variable
@@ -93,6 +93,9 @@ private:
 	// which is why the parameter must be the same type of the thing being replicated
 	UFUNCTION()
 	void OnRep_OverlappingWeapon(AWeapon* LastWeaponBeforeReplication);
+
+	UFUNCTION()
+	void OnRep_vClip();
 
 	UPROPERTY(VisibleAnywhere)
 	class UCombatComponent* Combat;
