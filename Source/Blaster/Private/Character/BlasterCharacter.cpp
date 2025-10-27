@@ -81,7 +81,28 @@ void ABlasterCharacter::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
+// Vclip can be called on either server on client
 void ABlasterCharacter::vclip()
+{
+	if (GEngine)
+	{
+		const FString Authority = HasAuthority() ? TEXT("Server") : TEXT("Client");
+		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("VClip called - %s"), *Authority));
+	}
+
+	if (!HasAuthority())
+	{
+		// If client enable vClip locally
+		EnableVclip();
+	}
+	
+	// Either Case of Client or server calling this function: call RPC to Server
+	// I think if we are server it just doesnt send the rpc and executes on the server
+	ServerVClipRPC();
+}
+
+
+void ABlasterCharacter::EnableVclip()
 {
 	UCharacterMovementComponent* MoveComp = GetCharacterMovement();
 
@@ -120,6 +141,18 @@ void ABlasterCharacter::vclip()
 	}
 }
 
+void ABlasterCharacter::ServerVClipRPC_Implementation()
+{
+
+	if (GEngine)
+	{
+		const FString Authority = HasAuthority() ? TEXT("Server") : TEXT("Client");
+		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("RPC called - %s"), *Authority));
+	}
+	
+	EnableVclip();
+}
+
 void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -132,6 +165,8 @@ void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimePropert
 
 	// Only replicate to the client that owns the blaster character (COND_OWERONLy == I OWN THE PAWN)
 	DOREPLIFETIME_CONDITION(ABlasterCharacter, OverlappingWeapon, COND_OwnerOnly)
+
+	DOREPLIFETIME_CONDITION(ABlasterCharacter, bIsVClipEnabled, COND_OwnerOnly)
 }
 
 void ABlasterCharacter::PostInitializeComponents()

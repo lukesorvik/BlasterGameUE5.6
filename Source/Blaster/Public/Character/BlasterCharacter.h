@@ -46,6 +46,7 @@ public:
 	// Exec means its called from the in game console
 	UFUNCTION(Exec)
 	void vclip();
+	void EnableVclip();
 
 	// #Step 2: Need to overide in order to replicate
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
@@ -78,6 +79,7 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class UWidgetComponent* OverHeadWidget;
 
+	UPROPERTY(Replicated)
 	bool bIsVClipEnabled = false;
 
 	// #Step 1: uproperty replicated to replicate a variable
@@ -100,6 +102,9 @@ private:
 	// RPC Called on Client When the equip button is pressed -> Calls Equip Weapon On Server
 	UFUNCTION(Server, Reliable)
 	void ServerEquipButtonPressed();
+
+	UFUNCTION(Server, Reliable)
+	void ServerVClipRPC();
 	
 public:
 	// Setters
