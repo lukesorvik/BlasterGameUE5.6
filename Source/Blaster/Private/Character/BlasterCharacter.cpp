@@ -255,6 +255,10 @@ void ABlasterCharacter::EquipButtonPressed(const FInputActionValue& Value)
 
 void ABlasterCharacter::OnRep_OverlappingWeapon(AWeapon* LastWeaponBeforeReplication)
 {
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(-1,10.0f, FColor::Black, TEXT("Replicated"));
+	}
 	// This should only be called two times - when we enter the sphere, and when we exit
 	// On exit, LastWeapon = true, Overlapping weapon = false(null), so hide
 	// On enter, LastWeapon= false(null), OverlappingWeapon = true, so show
