@@ -40,12 +40,17 @@ public:
 	UPROPERTY(EditAnywhere, Category = Input)
 	UInputAction* JumpAction;
 
+	UPROPERTY(EditAnywhere, Category = Input)
+	UInputAction* EquipAction;
+
 	// Exec means its called from the in game console
 	UFUNCTION(Exec)
 	void vclip();
 
 	// #Step 2: Need to overide in order to replicate
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+
+	virtual void PostInitializeComponents() override;
 
 
 protected:
@@ -59,6 +64,7 @@ protected:
 	void StartCrouch(const FInputActionValue& Value);
 	void StopCrouch(const FInputActionValue& Value);
 	void CrouchHeld(const FInputActionValue& Value);
+	void EquipButtonPressed(const FInputActionValue& Value);
 
 
 private:
@@ -85,6 +91,9 @@ private:
 	// which is why the parameter must be the same type of the thing being replicated
 	UFUNCTION()
 	void OnRep_OverlappingWeapon(AWeapon* LastWeaponBeforeReplication);
+
+	UPROPERTY(VisibleAnywhere)
+	class UCombatComponent* Combat;
 	
 public:
 	void SetOverlappingWeapon(AWeapon* Weapon);

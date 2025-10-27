@@ -15,9 +15,8 @@ enum class EWeaponState : uint8
 	EWS_Initial UMETA(DisplayName="Initial State"), // Weapon sitting in world, not equipped
 	EWS_Equipped UMETA(DisplayName="Equipped"),
 	EWS_Dropped UMETA(DisplayName="Dropped"), // Collision enabled
-
-	EWS_MAX UMETA(DisplayName="DefaultMax") // Max used to check how many enum constants are in this enum, can check the value of EWS_MAX
-	
+	// Max used to check how many enum constants are in this enum, can check the value of EWS_MAX
+	EWS_MAX UMETA(DisplayName="DefaultMax")
 };
 
 
@@ -25,8 +24,8 @@ UCLASS()
 class BLASTER_API AWeapon : public AActor
 {
 	GENERATED_BODY()
-	
-public:	
+
+public:
 	// Sets default values for this actor's properties
 	AWeapon();
 
@@ -60,16 +59,16 @@ protected:
 	// Should be called on the server only
 	UFUNCTION()
 	virtual void OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent,
-		AActor* OtherActor,
-		UPrimitiveComponent* OtherComp,
-		int32 OtherBodyIndex);
+	                                AActor* OtherActor,
+	                                UPrimitiveComponent* OtherComp,
+	                                int32 OtherBodyIndex);
 
 private:
 	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
 	USkeletalMeshComponent* WeaponMesh;
 
 	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
-	class USphereComponent* AreaSphere; 
+	class USphereComponent* AreaSphere;
 
 	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
 	EWeaponState WeaponState;
@@ -78,7 +77,7 @@ private:
 	class UWidgetComponent* PickupWidget;
 
 	
-
-
-
+public:
+	// Setter
+	FORCEINLINE void SetWeaponState(EWeaponState State) {WeaponState = State;}
 };

@@ -7,6 +7,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
+#include "BlasterComponents/CombatComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/WidgetComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -64,8 +65,13 @@ ABlasterCharacter::ABlasterCharacter()
 	// enable crouching
 	GetMovementComponent()->GetNavAgentPropertiesRef().bCanCrouch = true;
 
-	// // Enable replication
+	// Enable replication
 	bReplicates = true;
+
+	// Initialize combat component
+	Combat = CreateDefaultSubobject<UCombatComponent>(TEXT("CombatComponent"));
+	Combat->SetIsReplicated(true);
+	
 }
 
 
@@ -126,6 +132,17 @@ void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimePropert
 
 	// Only replicate to the client that owns the blaster character (COND_OWERONLy == I OWN THE PAWN)
 	DOREPLIFETIME_CONDITION(ABlasterCharacter, OverlappingWeapon, COND_OwnerOnly)
+}
+
+void ABlasterCharacter::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+
+	if (Combat)
+	{
+		// Initialize combat component variable to point to this blaster character
+		Combat->BlasterCharacter = this;
+	}
 }
 
 
@@ -218,6 +235,22 @@ void ABlasterCharacter::CrouchHeld(const FInputActionValue& Value)
 		// Add movement input in Z axis
 		AddMovementInput(FlyDirection, FlySpeed);
 	}
+}
+
+void ABlasterCharacter::EquipButtonPressed(const FInputActionValue& Value)
+{
+	// if (GEngine)
+	// {
+	// 	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green, TEXT("Equipped"));
+	// }
+
+	if (Combat && HasAuthority() && OverlappingWeapon)
+	{
+		// If combat component is valid && we are the server && and OverlappingWeapon Exists
+		
+		Combat->EquipWeapon(OverlappingWeapon);
+	}
+	
 }
 
 void ABlasterCharacter::OnRep_OverlappingWeapon(AWeapon* LastWeaponBeforeReplication)
@@ -317,6 +350,10 @@ void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Completed, this,
 		                                   &ABlasterCharacter::StopCrouch);
 		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Ongoing, this, &ABlasterCharacter::CrouchHeld);
+
+		//Equip
+		EnhancedInputComponent->BindAction(EquipAction, ETriggerEvent::Started, this, &ABlasterCharacter::EquipButtonPressed);
+		
 	}
 	else
 	{
