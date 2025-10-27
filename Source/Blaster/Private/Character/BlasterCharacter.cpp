@@ -65,7 +65,7 @@ ABlasterCharacter::ABlasterCharacter()
 	GetMovementComponent()->GetNavAgentPropertiesRef().bCanCrouch = true;
 
 	// // Enable replication
-	// bReplicates = true;
+	bReplicates = true;
 }
 
 

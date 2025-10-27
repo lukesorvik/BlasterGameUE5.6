@@ -76,6 +76,7 @@ private:
 
 	// #Step 1: uproperty replicated to replicate a variable
 	// On rep Overlapping weapon will be called on the client when overlapping weapon replicates to that client
+	// https://dev.epicgames.com/documentation/en-us/unreal-engine/replicate-actor-properties-in-unreal-engine#addareplicatedusingproperty
 	UPROPERTY(ReplicatedUsing = OnRep_OverlappingWeapon)
 	class AWeapon* OverlappingWeapon;
 	
