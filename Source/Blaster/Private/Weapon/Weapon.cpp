@@ -58,26 +58,45 @@ void AWeapon::BeginPlay()
 	// Same check as HasAuthority, check if we are the server
 	if (HasAuthority()) 
 		{
+			// Only bind callbacks if we are the server!!!
 			AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 			AreaSphere->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap); // Overlap if we are a pawn
 
 			// Bind our OnSphereOverlap Function to the area sphere's list of delegates to call back on begin overlap
 			AreaSphere->OnComponentBeginOverlap.AddDynamic(this, &AWeapon::OnSphereOverlap);
+
+			AreaSphere->OnComponentEndOverlap.AddDynamic(this, &AWeapon::OnSphereEndOverlap);
 		}
 	
 }
 
+
+// THIS FUNCTION IS ONLY CALLED ON THE SERVER
 void AWeapon::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-
-	// Set widget visability only if the other overlapping actor is the blaster character
 	ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(OtherActor); // Cast the other actor to ABlaster character
 	if (BlasterCharacter)
 	{
-		// Set the player's character
-		BlasterCharacter->SetOverlappingWeapon(this);
+		// True if cast succeeds
+		// Set widget visibility only if the other overlapping actor of the blaster character type
 		
+		// Set the widget for the player that is overlapping the weapon
+		// Then the variable for that character will be replicated to the client matching the servers data
+		BlasterCharacter->SetOverlappingWeapon(this);
+
+	}
+}
+
+void AWeapon::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+
+	ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(OtherActor); 
+	if (BlasterCharacter)
+	{
+		// We are no longer overlapping the weapon, so no overlap, set to null
+		BlasterCharacter->SetOverlappingWeapon(nullptr);
 
 	}
 }

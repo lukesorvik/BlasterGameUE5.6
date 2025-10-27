@@ -75,11 +75,18 @@ private:
 	bool bIsVClipEnabled = false;
 
 	// #Step 1: uproperty replicated to replicate a variable
-	UPROPERTY(Replicated)
+	// On rep Overlapping weapon will be called on the client when overlapping weapon replicates to that client
+	UPROPERTY(ReplicatedUsing = OnRep_OverlappingWeapon)
 	class AWeapon* OverlappingWeapon;
 	
+	// Called automatically when the variable after the OnRep_ is replicated
+	// OnRep_ will pass in the last value before replication as a parameter
+	// which is why the parameter must be the same type of the thing being replicated
+	UFUNCTION()
+	void OnRep_OverlappingWeapon(AWeapon* LastWeaponBeforeReplication);
+	
 public:
-	FORCEINLINE void SetOverlappingWeapon(AWeapon* Weapon) {OverlappingWeapon = Weapon;}
+	void SetOverlappingWeapon(AWeapon* Weapon);
 
 
 };

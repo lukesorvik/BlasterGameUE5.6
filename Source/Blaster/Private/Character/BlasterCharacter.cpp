@@ -16,7 +16,7 @@
 // Sets default values
 ABlasterCharacter::ABlasterCharacter()
 {
- 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
 	// Set size for collision capsule
@@ -46,10 +46,11 @@ ABlasterCharacter::ABlasterCharacter()
 	CameraBoom->TargetArmLength = 600.f; // The camera follows at this distance behind the character
 	CameraBoom->bUsePawnControlRotation = true; // Rotate the arm based on the controller rotations
 	// CameraBoom->bDoCollisionTest = false;
-	
+
 
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
-	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom
+	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
+	// Attach the camera to the end of the boom
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
 	bUseControllerRotationYaw = false;
@@ -67,10 +68,17 @@ ABlasterCharacter::ABlasterCharacter()
 	// bReplicates = true;
 }
 
+
+// Called every frame
+void ABlasterCharacter::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+}
+
 void ABlasterCharacter::vclip()
 {
 	UCharacterMovementComponent* MoveComp = GetCharacterMovement();
-	
+
 	if (MoveComp)
 	{
 		// Toggle VClip
@@ -78,17 +86,17 @@ void ABlasterCharacter::vclip()
 		{
 			// Disable VClip
 			bIsVClipEnabled = false;
-	
+
 			// Restore capsule collision
 			GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 			GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
-	
+
 			// Restore camera collision
 			CameraBoom->bDoCollisionTest = true;
-	
+
 			// Restore movement
 			MoveComp->SetMovementMode(MOVE_Walking);
-			
+
 			if (GEngine)
 				GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, TEXT("Flying Disabled"));
 		}
@@ -104,8 +112,6 @@ void ABlasterCharacter::vclip()
 				GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green, TEXT("Flying Enabled"));
 		}
 	}
-
-	
 }
 
 void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
@@ -114,7 +120,7 @@ void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimePropert
 
 	// #STEP 3: Add variable to replicate
 	// DOREPLIFETIME(Class, variable within class to replicate)
-	
+
 	// Replicate the weapon we are overlapping with to all clients
 	// DOREPLIFETIME(ABlasterCharacter, OverlappingWeapon)
 
@@ -127,15 +133,11 @@ void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimePropert
 void ABlasterCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
 void ABlasterCharacter::Move(const FInputActionValue& Value)
 {
-	// if (GEngine)
-	// {
-	// 	GEngine->AddOnScreenDebugMessage(3, 15.0f, FColor::Green, FString::Printf(TEXT("Move input: %s"), *Value.ToString()));
-	// }
+
 	// input is a Vector2D
 	FVector2D MovementVector = Value.Get<FVector2D>();
 
@@ -159,11 +161,6 @@ void ABlasterCharacter::Move(const FInputActionValue& Value)
 
 void ABlasterCharacter::Look(const FInputActionValue& Value)
 {
-	// if (GEngine)
-	// {
-	// 	// Custom key of 2 so it doesn't overwrite other messages
-	// 	GEngine->AddOnScreenDebugMessage(2, 15.0f, FColor::Green, FString::Printf(TEXT("Look input: %s"), *Value.ToString()));
-	// }
 	// input is a Vector2D
 	FVector2D LookAxisVector = Value.Get<FVector2D>();
 
@@ -210,7 +207,6 @@ void ABlasterCharacter::StopCrouch(const FInputActionValue& Value)
 }
 
 
-
 void ABlasterCharacter::CrouchHeld(const FInputActionValue& Value)
 {
 	if (bIsVClipEnabled)
@@ -224,17 +220,55 @@ void ABlasterCharacter::CrouchHeld(const FInputActionValue& Value)
 	}
 }
 
-// Called every frame
-void ABlasterCharacter::Tick(float DeltaTime)
+void ABlasterCharacter::OnRep_OverlappingWeapon(AWeapon* LastWeaponBeforeReplication)
 {
-	Super::Tick(DeltaTime);
-
+	// This should only be called two times - when we enter the sphere, and when we exit
+	// On exit, LastWeapon = true, Overlapping weapon = false(null), so hide
+	// On enter, LastWeapon= false(null), OverlappingWeapon = true, so show
+	// NEVER CALLED ON SERVER
+	// ONLY REPLICATE SERVER -> CLIENT
+	// THIS FUNCTION IS A CALLBACK FOR WHEN THE CLIENT RECIEVES DATA FROM THE SERVER FOR OVERLAPPINGWEAPON
 	if (OverlappingWeapon)
 	{
+		// Make sure the Weapon Replicated correctly (null can be replicated as well)
 		OverlappingWeapon->ShowPickupWidget(true);
 	}
-
+	if (LastWeaponBeforeReplication)
+	{
+		// If the last value was not null
+		// Hide the widget
+		LastWeaponBeforeReplication->ShowPickupWidget(false);
+	}
 }
+
+
+// OnSphereOverlapp only gets called on the server, which is calling this function
+// Therefore the machine running this code IS THE SERVER
+// ONLY RUN ON THE SERVER
+// BECAUSE OF THIS WE NEED TO ADD LOGIC THAT WOULD BE OnRep_OverlappingWeapon HERE, BUT ONLY FOR THE SERVER
+// SINCE OnRep_OverlappingWeapon WILL NOT BE CALLED ON THE SERVER
+void ABlasterCharacter::SetOverlappingWeapon(AWeapon* Weapon) {
+	
+	if (OverlappingWeapon)
+	{
+		// If the OverlappingWeapon = True, that means we are about to replace it with null
+		// So essentially OverlappingWeapon = LastWeapon
+		// So disable widget since the server does not get replicated, so OnRep_OverlappingWeapon will not be called for the server!
+		OverlappingWeapon->ShowPickupWidget(false);
+	}
+
+	OverlappingWeapon = Weapon;
+
+	if (IsLocallyControlled() && OverlappingWeapon)
+	{
+		// If the server is controlling this character, and the Weapon is not null
+		// then show the widget,
+		// since replication only works server->client
+		OverlappingWeapon->ShowPickupWidget(true);
+	}
+	
+}
+
 
 // Called to bind functionality to input
 void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -247,7 +281,7 @@ void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	//https://dev.epicgames.com/documentation/en-us/unreal-engine/enhanced-input-in-unreal-engine?application_version=5.5
 
 	// Stolen from third person template
-	
+
 	// Add Input Mapping Context
 	if (APlayerController* PlayerController = Cast<APlayerController>(GetController()))
 	{
@@ -270,7 +304,7 @@ void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Ongoing, this, &ABlasterCharacter::JumpHeld);
-		
+
 
 		// Moving
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ABlasterCharacter::Move);
@@ -280,9 +314,9 @@ void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 
 		// Crouching
 		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &ABlasterCharacter::StartCrouch);
-		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Completed, this,  &ABlasterCharacter::StopCrouch);
+		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Completed, this,
+		                                   &ABlasterCharacter::StopCrouch);
 		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Ongoing, this, &ABlasterCharacter::CrouchHeld);
-		
 	}
 	else
 	{
@@ -291,6 +325,4 @@ void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, TEXT("EnhancedInputComponent not found!"));
 		}
 	}
-
 }
-

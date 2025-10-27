@@ -40,13 +40,13 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	UFUNCTION()
 	// Declare as ufunction so we can use this as a delegate for the onOverlap callback
 	// Only want overlap functions to happen on the server
 	// Bind to the server only
 	// virtual so child funcs can override
-	// Parameters are required for an overlap function
+	// Parameters matching delegate we bind to are required for an overlap function
 	// Called when Something overlaps with the weapon's collision capsule
+	UFUNCTION()
 	virtual void OnSphereOverlap(
 		UPrimitiveComponent* OverlappedComponent,
 		AActor* OtherActor,
@@ -55,6 +55,14 @@ protected:
 		bool bFromSweep,
 		const FHitResult& SweepResult
 	);
+
+	// Callback for delegate of weapon when the overlap ends
+	// Should be called on the server only
+	UFUNCTION()
+	virtual void OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent,
+		AActor* OtherActor,
+		UPrimitiveComponent* OtherComp,
+		int32 OtherBodyIndex);
 
 private:
 	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
