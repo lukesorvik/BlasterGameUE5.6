@@ -113,9 +113,13 @@ void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimePropert
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	// #STEP 3: Add variable to replicate
-	// Class, variable within class to replicate
-	// Replicate the weapon we are overlapping with
-	DOREPLIFETIME(ABlasterCharacter, OverlappingWeapon)
+	// DOREPLIFETIME(Class, variable within class to replicate)
+	
+	// Replicate the weapon we are overlapping with to all clients
+	// DOREPLIFETIME(ABlasterCharacter, OverlappingWeapon)
+
+	// Only replicate to the client that owns the blaster character (COND_OWERONLy == I OWN THE PAWN)
+	DOREPLIFETIME_CONDITION(ABlasterCharacter, OverlappingWeapon, COND_OwnerOnly)
 }
 
 
