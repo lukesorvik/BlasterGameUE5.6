@@ -11,6 +11,7 @@
 #include "Components/WidgetComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Net/UnrealNetwork.h"
+#include "Weapon/Weapon.h"
 
 // Sets default values
 ABlasterCharacter::ABlasterCharacter()
@@ -105,6 +106,16 @@ void ABlasterCharacter::vclip()
 	}
 
 	
+}
+
+void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	// #STEP 3: Add variable to replicate
+	// Class, variable within class to replicate
+	// Replicate the weapon we are overlapping with
+	DOREPLIFETIME(ABlasterCharacter, OverlappingWeapon)
 }
 
 
@@ -213,6 +224,11 @@ void ABlasterCharacter::CrouchHeld(const FInputActionValue& Value)
 void ABlasterCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	if (OverlappingWeapon)
+	{
+		OverlappingWeapon->ShowPickupWidget(true);
+	}
 
 }
 

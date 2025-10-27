@@ -73,11 +73,12 @@ void AWeapon::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* 
 
 	// Set widget visability only if the other overlapping actor is the blaster character
 	ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(OtherActor); // Cast the other actor to ABlaster character
-	if (BlasterCharacter && PickupWidget)
+	if (BlasterCharacter)
 	{
-		// If true it means the cast succeeded and a blaster character has overlapped
-		// And check to make sure pickup widget is valid (not null ptr)
-		PickupWidget->SetVisibility(true);
+		// Set the player's character
+		BlasterCharacter->SetOverlappingWeapon(this);
+		
+
 	}
 }
 
@@ -86,5 +87,14 @@ void AWeapon::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+}
+
+void AWeapon::ShowPickupWidget(bool bShowWidget) const
+{
+	if (PickupWidget)
+	{
+		//Makesure the widget is valid
+		PickupWidget->SetVisibility(bShowWidget);
+	}
 }
 

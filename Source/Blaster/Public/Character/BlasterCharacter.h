@@ -44,6 +44,9 @@ public:
 	UFUNCTION(Exec)
 	void vclip();
 
+	// #Step 2: Need to overide in order to replicate
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+
 
 protected:
 	// Called when the game starts or when spawned
@@ -70,8 +73,13 @@ private:
 	class UWidgetComponent* OverHeadWidget;
 
 	bool bIsVClipEnabled = false;
+
+	// #Step 1: uproperty replicated to replicate a variable
+	UPROPERTY(Replicated)
+	class AWeapon* OverlappingWeapon;
 	
-public:	
+public:
+	FORCEINLINE void SetOverlappingWeapon(AWeapon* Weapon) {OverlappingWeapon = Weapon;}
 
 
 };

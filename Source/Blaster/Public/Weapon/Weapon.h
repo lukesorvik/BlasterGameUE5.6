@@ -33,6 +33,9 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	// Pass true or false if we want to show the pickup widget
+	void ShowPickupWidget(const bool bShowWidget) const;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -43,6 +46,7 @@ protected:
 	// Bind to the server only
 	// virtual so child funcs can override
 	// Parameters are required for an overlap function
+	// Called when Something overlaps with the weapon's collision capsule
 	virtual void OnSphereOverlap(
 		UPrimitiveComponent* OverlappedComponent,
 		AActor* OtherActor,
