@@ -239,16 +239,16 @@ void ABlasterCharacter::CrouchHeld(const FInputActionValue& Value)
 
 void ABlasterCharacter::EquipButtonPressed(const FInputActionValue& Value)
 {
-	// if (GEngine)
-	// {
-	// 	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green, TEXT("Equipped"));
-	// }
-
 	if (Combat && HasAuthority() && OverlappingWeapon)
 	{
 		// If combat component is valid && we are the server && and OverlappingWeapon Exists
 		
 		Combat->EquipWeapon(OverlappingWeapon);
+	}
+	else if (Combat && !HasAuthority() && OverlappingWeapon)
+	{
+		// We are not the server so send the rpc
+		ServerEquipButtonPressed();
 	}
 	
 }
@@ -304,6 +304,15 @@ void ABlasterCharacter::SetOverlappingWeapon(AWeapon* Weapon) {
 		OverlappingWeapon->ShowPickupWidget(true);
 	}
 	
+}
+
+void ABlasterCharacter::ServerEquipButtonPressed_Implementation()
+{
+	if (Combat)
+	{
+		Combat->EquipWeapon(OverlappingWeapon);
+	}
+	return;
 }
 
 

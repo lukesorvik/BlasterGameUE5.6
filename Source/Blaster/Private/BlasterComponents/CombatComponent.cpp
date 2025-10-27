@@ -4,6 +4,7 @@
 #include "BlasterComponents/CombatComponent.h"
 
 #include "Character/BlasterCharacter.h"
+#include "Components/SphereComponent.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "Weapon/Weapon.h"
 
@@ -46,4 +47,5 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 	// Set owner of weapon to the pawn that equipped it
 	EquippedWeapon->SetOwner(BlasterCharacter);
 	EquippedWeapon->ShowPickupWidget(false);
+	EquippedWeapon->GetAreaSphere()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }

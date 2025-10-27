@@ -8,6 +8,7 @@
 #include "Character/BlasterCharacter.h"
 #include "Components/SphereComponent.h"
 #include "Components/WidgetComponent.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values
 AWeapon::AWeapon()
@@ -70,7 +71,6 @@ void AWeapon::BeginPlay()
 	
 }
 
-
 // THIS FUNCTION IS ONLY CALLED ON THE SERVER
 void AWeapon::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -101,6 +101,21 @@ void AWeapon::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActo
 	}
 }
 
+void AWeapon::OnRep_WeaponState()
+{
+	switch (WeaponState)
+	{
+	case EWeaponState::EWS_Equipped:
+		ShowPickupWidget(false);
+		// Set no collision so we dont keep trying to replicate that an actor is inside the sphere
+		AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		// Dont need to set owner here since it is replicated from Server -> clients
+		break;
+	default:
+		break;
+	}
+}
+
 // Called every frame
 void AWeapon::Tick(float DeltaTime)
 {
@@ -115,5 +130,13 @@ void AWeapon::ShowPickupWidget(bool bShowWidget) const
 		//Makesure the widget is valid
 		PickupWidget->SetVisibility(bShowWidget);
 	}
+}
+
+void AWeapon::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	// Replicate the variable from server -> Client
+	DOREPLIFETIME(AWeapon, WeaponState);
 }
 

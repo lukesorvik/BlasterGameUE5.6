@@ -35,6 +35,11 @@ public:
 	// Pass true or false if we want to show the pickup widget
 	void ShowPickupWidget(const bool bShowWidget) const;
 
+	// For replication
+	// Define variables to replicate inside the definition
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -70,14 +75,18 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
 	class USphereComponent* AreaSphere;
 
-	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
+	// Add callback function for when this variable is replicated
+	UPROPERTY(ReplicatedUsing = OnRep_WeaponState, VisibleAnywhere, Category = "Weapon Properties")
 	EWeaponState WeaponState;
 
 	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
 	class UWidgetComponent* PickupWidget;
 
+	UFUNCTION()
+	void OnRep_WeaponState();
 	
 public:
 	// Setter
 	FORCEINLINE void SetWeaponState(EWeaponState State) {WeaponState = State;}
+	FORCEINLINE USphereComponent* GetAreaSphere() const {return AreaSphere;}
 };

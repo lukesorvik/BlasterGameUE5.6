@@ -94,9 +94,13 @@ private:
 
 	UPROPERTY(VisibleAnywhere)
 	class UCombatComponent* Combat;
+
+	// Reliable RPC : guarenteed to be executed (distributed system, need ack like tcp), Costly, dont want in something like the tick function
+	// Unreliable RPC: Not guarenteed, packets can be dropped
+	UFUNCTION(Server, Reliable)
+	void ServerEquipButtonPressed();
 	
 public:
+	// Setters
 	void SetOverlappingWeapon(AWeapon* Weapon);
-
-
 };
