@@ -36,6 +36,7 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 	if (BlasterCharacter == nullptr || WeaponToEquip == nullptr) return;
 
 	EquippedWeapon = WeaponToEquip;
+	// Updates the WeaponState which is replicated to clients
 	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
 	const USkeletalMeshSocket* HandSocket = BlasterCharacter->GetMesh()->GetSocketByName(FName("RightHandSocket"));
 
@@ -46,6 +47,5 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 
 	// Set owner of weapon to the pawn that equipped it
 	EquippedWeapon->SetOwner(BlasterCharacter);
-	EquippedWeapon->ShowPickupWidget(false);
-	EquippedWeapon->GetAreaSphere()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
 }

@@ -82,11 +82,12 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
 	class UWidgetComponent* PickupWidget;
 
+	// Called when the Weapon State has been updated via replication from Server->Client
 	UFUNCTION()
 	void OnRep_WeaponState();
 	
 public:
 	// Setter
-	FORCEINLINE void SetWeaponState(EWeaponState State) {WeaponState = State;}
+	void SetWeaponState(EWeaponState State);
 	FORCEINLINE USphereComponent* GetAreaSphere() const {return AreaSphere;}
 };

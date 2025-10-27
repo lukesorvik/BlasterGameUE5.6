@@ -101,8 +101,29 @@ void AWeapon::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActo
 	}
 }
 
+// Result of Server -> Client Replication
+// This code Runs on client to adjust weapon state locally
+// Same as SetWeaponState But for Clients
 void AWeapon::OnRep_WeaponState()
 {
+	switch (WeaponState)
+	{
+	case EWeaponState::EWS_Equipped:
+		ShowPickupWidget(false);
+		// Set no collision so we dont keep trying to replicate that an actor is inside the sphere
+		AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		// Dont need to set owner here since it is replicated from Server -> clients
+		break;
+	default:
+		break;
+	}
+}
+
+// Only Called on Server
+// Updates the weapon state on the server which the variable WeaponState is then replicated to clients
+void AWeapon::SetWeaponState(EWeaponState State)
+{
+	WeaponState = State;
 	switch (WeaponState)
 	{
 	case EWeaponState::EWS_Equipped:

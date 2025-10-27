@@ -97,6 +97,7 @@ private:
 
 	// Reliable RPC : guarenteed to be executed (distributed system, need ack like tcp), Costly, dont want in something like the tick function
 	// Unreliable RPC: Not guarenteed, packets can be dropped
+	// RPC Called on Client When the equip button is pressed -> Calls Equip Weapon On Server
 	UFUNCTION(Server, Reliable)
 	void ServerEquipButtonPressed();
 	

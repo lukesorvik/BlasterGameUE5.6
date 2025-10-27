@@ -22,6 +22,7 @@ public:
 	                           FActorComponentTickFunction* ThisTickFunction) override;
 
 	// Forward declare in the param to tell compiler the class exists somewhere
+	// Only called By Server, Equips the Weapon
 	void EquipWeapon(class AWeapon* WeaponToEquip);
 
 protected:
