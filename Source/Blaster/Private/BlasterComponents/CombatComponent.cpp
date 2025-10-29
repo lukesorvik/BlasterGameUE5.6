@@ -6,6 +6,7 @@
 #include "Character/BlasterCharacter.h"
 #include "Components/SphereComponent.h"
 #include "Engine/SkeletalMeshSocket.h"
+#include "Net/UnrealNetwork.h"
 #include "Weapon/Weapon.h"
 
 // Sets default values for this component's properties
@@ -48,4 +49,13 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 	// Set owner of weapon to the pawn that equipped it
 	EquippedWeapon->SetOwner(BlasterCharacter);
 
+}
+
+void UCombatComponent::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+
+	// Replicate this variable 
+	DOREPLIFETIME(UCombatComponent, EquippedWeapon)
 }

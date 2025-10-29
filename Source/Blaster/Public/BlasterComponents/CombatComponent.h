@@ -7,6 +7,8 @@
 #include "CombatComponent.generated.h"
 
 
+// Extension of BlasterCharacter.h , just to seperate some of the logic from the blaster character
+// Since BlasterCharacter.h is a friend it can access all parts of this class as if it were it's own
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class BLASTER_API UCombatComponent : public UActorComponent
 {
@@ -25,13 +27,21 @@ public:
 	// Only called By Server, Equips the Weapon
 	void EquipWeapon(class AWeapon* WeaponToEquip);
 
+	// #Step 2: Need to overide in order to replicate
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
 private:
+	// Replicate EquippedWeapon property for each pawn, Server -> Clients, so all clients match authoritative
+	UPROPERTY(Replicated)
 	class AWeapon* EquippedWeapon;
+	
 	class ABlasterCharacter* BlasterCharacter;
+
+	
 
 public:
 };

@@ -357,6 +357,19 @@ void ABlasterCharacter::SetOverlappingWeapon(AWeapon* Weapon)
 	}
 }
 
+bool ABlasterCharacter::IsWeaponEquipped()
+{
+	// We have access to the combat component(since we are friend in combatcomponent.h)
+
+	// return true if combact component exists, and the equipped weapon is not null
+	// Bellow code is safe:
+	// in normal single-threaded C++ the left operand of && is evaluated first and the operator short‑circuits, so the second expression is not evaluated when the first is null; you won't get a null‑pointer dereference in that case.
+	// Notes and caveats:
+	// If another thread can set the pointer to null between the check and the access, a race condition could still cause a crash. Game code in Unreal typically runs on the game thread, so this is usually not a concern.
+	// For UObject/UActorComponent pointers, the pointer can be non‑null while the object is marked PendingKill. Use IsValid(...) (Unreal helper) to guard against that.
+	return (Combat && Combat->EquippedWeapon);
+}
+
 void ABlasterCharacter::ServerEquipButtonPressed_Implementation()
 {
 	if (Combat)

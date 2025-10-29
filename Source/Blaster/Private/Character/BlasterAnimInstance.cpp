@@ -6,6 +6,7 @@
 #include "Character/BlasterCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
+// On startup get the blaster character associated
 void UBlasterAnimInstance::NativeInitializeAnimation()
 {
 	Super::NativeInitializeAnimation();
@@ -16,6 +17,8 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
 	Super::NativeUpdateAnimation(DeltaSeconds);
 
+
+	// Check Blaster character we got on initialization
 	if (BlasterCharacter == nullptr)
 	{
 		// If first tick we dont have the character
@@ -41,5 +44,7 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		bIsAccelerating = BlasterCharacter->GetCharacterMovement()->GetCurrentAcceleration().Size() > 0.f ? true : false;
 
 		bIsCrouching = BlasterCharacter->bIsCrouched;
+
+		bWeaponEquipped = BlasterCharacter->IsWeaponEquipped();
 	}
 }

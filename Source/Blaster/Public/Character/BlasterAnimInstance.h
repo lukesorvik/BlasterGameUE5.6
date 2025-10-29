@@ -14,6 +14,11 @@ class BLASTER_API UBlasterAnimInstance : public UAnimInstance
 {
 	GENERATED_BODY()
 
+
+// Anim instance exists on each machine for each character
+// but it only has access to variables on that machine
+
+
 public:
 	// Similar to beginPlay, called when the anim instance is initialized
 	virtual void NativeInitializeAnimation() override;
@@ -38,4 +43,8 @@ private:
 
 	UPROPERTY(BluePrintReadOnly, Category = Character, meta = (AllowPrivateAccess = "true"))
 	bool bIsCrouching;
+
+	UPROPERTY(BluePrintReadOnly, Category = Character, meta = (AllowPrivateAccess = "true"))
+	bool bWeaponEquipped; // Check if we have a weapon currently equipped
+	// Replicated from CombatComponent, used to see if a weapon is equipped
 };

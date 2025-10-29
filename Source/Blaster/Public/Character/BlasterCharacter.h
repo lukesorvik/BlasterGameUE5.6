@@ -112,4 +112,8 @@ private:
 public:
 	// Setters
 	void SetOverlappingWeapon(AWeapon* Weapon);
+
+	// Getters
+	bool IsWeaponEquipped();
+	
 };
