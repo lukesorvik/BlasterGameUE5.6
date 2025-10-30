@@ -46,5 +46,7 @@ private:
 
 	UPROPERTY(BluePrintReadOnly, Category = Character, meta = (AllowPrivateAccess = "true"))
 	bool bWeaponEquipped; // Check if we have a weapon currently equipped
-	// Replicated from CombatComponent, used to see if a weapon is equipped
+	// Replicated via from CombatComponent, BlasterCharacter->isWeaponEquipped() returns the value, Native update animation updates value using blaster character func
+
+
 };

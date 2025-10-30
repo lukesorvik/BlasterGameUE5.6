@@ -29,6 +29,7 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		//Ptr evaluates true if != nullptr
 
 		// Update the animation properties every tick
+		// Set Anim Instance Variables based on Character
 		
 		// Get the lateral speed of the character from velocity
 		FVector Velocity = BlasterCharacter->GetVelocity();
@@ -37,14 +38,12 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 		// Is the character in air?
 		bIsInAir = BlasterCharacter->GetCharacterMovement()->IsFalling();
-
+		
 		// Is the character accelerating?
-		//The Size() method calculates the magnitude of this vector. If the magnitude is greater than 0.f, it means the character is actively accelerating, and the boolean bIsAccelerating is set to true. Otherwise, it is set to false.
+		// The Size() method calculates the magnitude of this vector. If the magnitude is greater than 0.f, it means the character is actively accelerating, and the boolean bIsAccelerating is set to true. Otherwise, it is set to false.
 		// Ternary operator instead of if else
 		bIsAccelerating = BlasterCharacter->GetCharacterMovement()->GetCurrentAcceleration().Size() > 0.f ? true : false;
-
 		bIsCrouching = BlasterCharacter->bIsCrouched;
-
 		bWeaponEquipped = BlasterCharacter->IsWeaponEquipped();
 	}
 }

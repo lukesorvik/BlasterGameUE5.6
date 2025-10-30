@@ -245,22 +245,19 @@ void ABlasterCharacter::JumpHeld(const FInputActionValue& Value)
 
 void ABlasterCharacter::StartCrouch(const FInputActionValue& Value)
 {
-	if (GetCharacterMovement()->IsFalling())
+	if (!bIsCrouched)
 	{
-		return;
+		Crouch();
 	}
-	CameraBoom->SocketOffset.Z = -20.f; // Adjust as needed
-	Super::Crouch();
+
 }
 
 void ABlasterCharacter::StopCrouch(const FInputActionValue& Value)
 {
-	CameraBoom->SocketOffset.Z = 0.f;
-	if (GetCharacterMovement()->IsFalling())
+	if (bIsCrouched)
 	{
-		return;
+		UnCrouch();
 	}
-	Super::UnCrouch();
 }
 
 
@@ -325,7 +322,7 @@ void ABlasterCharacter::OnRep_vClip()
 	{
 		const FString Authority = HasAuthority() ? TEXT("Server") : TEXT("Client");
 		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow,
-										 FString::Printf(TEXT("OnRep_Vclip Called - %s"), *Authority));
+		                                 FString::Printf(TEXT("OnRep_Vclip Called - %s"), *Authority));
 	}
 	EnableVclipSettings();
 }
