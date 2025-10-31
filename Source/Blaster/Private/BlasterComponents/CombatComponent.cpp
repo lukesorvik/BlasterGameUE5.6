@@ -32,6 +32,21 @@ void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }
 
+
+void UCombatComponent::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+
+	// Replicate this variable 
+	DOREPLIFETIME(UCombatComponent, EquippedWeapon)
+	DOREPLIFETIME(UCombatComponent, bAiming)
+}
+
+/////////////////////////////////////////
+///
+///
+
 void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 {
 	if (BlasterCharacter == nullptr || WeaponToEquip == nullptr) return;
@@ -48,14 +63,34 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 
 	// Set owner of weapon to the pawn that equipped it
 	EquippedWeapon->SetOwner(BlasterCharacter);
-
 }
 
-void UCombatComponent::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+// Either called on Server Client or Client
+// Show aiming immediately, do not wait on RPC to show animation
+// Other players seeing the aim late is ok
+void UCombatComponent::SetAiming(bool bIsAiming)
 {
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	// Update local bool so we can update animation immediately
+	// (if we are server, it will be replicated automatically to clients)
+	bAiming = bIsAiming;
+
+	
+	// Dont need to Check if Authority or not
+	// https://cedric-neukirchen.net/docs/multiplayer-compendium/remote-procedure-calls
+	// If we're on the server, it'll just run on the server.
+	// It won't run on any other machine, but that's okay because we're setting a replicated variable so the value will replicate to all clients.
+	// But if we're on a client and we call this, it'll be executed on the server.
+
+	// if (!BlasterCharacter->HasAuthority())
+	// {
+	// If we are not the server, Notify other clients that we just Aimed
+	ServerSetAiming(bIsAiming);
+
+	// }
+}
 
 
-	// Replicate this variable 
-	DOREPLIFETIME(UCombatComponent, EquippedWeapon)
+void UCombatComponent::ServerSetAiming_Implementation(bool bIsAiming)
+{
+	bAiming = bIsAiming;
 }

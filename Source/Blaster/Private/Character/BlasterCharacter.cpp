@@ -80,78 +80,77 @@ void ABlasterCharacter::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
-// Vclip can be called on either server on client
-void ABlasterCharacter::vclip()
-{
-	if (GEngine)
-	{
-		const FString Authority = HasAuthority() ? TEXT("Server") : TEXT("Client");
-		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow,
-		                                 FString::Printf(TEXT("VClip called - %s"), *Authority));
-	}
 
-	// Either Case of Client or server calling this function: call RPC to Server
-	// I think if we are server it just doesnt send the rpc and executes on the server
-	ServerVClipRPC();
+// Called when the game starts or when spawned
+void ABlasterCharacter::BeginPlay()
+{
+	Super::BeginPlay();
 }
 
 
-void ABlasterCharacter::ServerVClipRPC_Implementation()
+// Called to bind functionality to input
+void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
-	if (GEngine)
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
+
+
+	// Initialize Enhanced Input actions, and bind to the functions
+	//https://dev.epicgames.com/community/learning/tutorials/eD13/unreal-engine-enhanced-input-in-ue5
+	//https://dev.epicgames.com/documentation/en-us/unreal-engine/enhanced-input-in-unreal-engine?application_version=5.5
+
+	// Stolen from third person template
+
+	// Add Input Mapping Context
+	if (APlayerController* PlayerController = Cast<APlayerController>(GetController()))
 	{
-		const FString Authority = HasAuthority() ? TEXT("Server") : TEXT("Client");
-		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow,
-		                                 FString::Printf(TEXT("RPC called - %s"), *Authority));
+		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<
+			UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
+		{
+			Subsystem->AddMappingContext(InputMapping, 0);
+			//https://dev.epicgames.com/documentation/en-us/unreal-engine/enhanced-input-in-unreal-engine
+			// When you add an Input Mapping Context to the Enhanced Input subsystem, you can also give it priority. If you have multiple contexts mapped to the same Input Action, then, when the Input Action is triggered, the context with the highest priority will be considered and the others ignored.
+			// Give higher priority to mouse look thank using gamepad
+			//Subsystem->AddMappingContext(InputMappingMouse, 1);
+		}
 	}
 
-	if (bIsVClipEnabled)
+	// Set up action bindings
+	// The input action listeners will callback our function we bind when the event is triggered
+	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
 	{
-		if (GEngine)
-			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, TEXT("Flying Disabled"));
-		bIsVClipEnabled = false;
+		// Jumping
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Ongoing, this, &ABlasterCharacter::JumpHeld);
+
+
+		// Moving
+		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ABlasterCharacter::Move);
+
+		// Looking
+		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ABlasterCharacter::Look);
+
+		// Crouching
+		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &ABlasterCharacter::StartCrouch);
+		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Completed, this,
+		                                   &ABlasterCharacter::StopCrouch);
+		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Ongoing, this, &ABlasterCharacter::CrouchHeld);
+
+		//Equip
+		EnhancedInputComponent->BindAction(EquipAction, ETriggerEvent::Started, this,
+		                                   &ABlasterCharacter::EquipButtonPressed);
+
+		// Aim down sight
+		EnhancedInputComponent->BindAction(AimAction, ETriggerEvent::Started, this,
+		                                   &ABlasterCharacter::AimButtonPressed);
+		EnhancedInputComponent->BindAction(AimAction, ETriggerEvent::Completed, this,
+		                                   &ABlasterCharacter::AimButtonReleased);
 	}
 	else
 	{
 		if (GEngine)
-			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green, TEXT("Flying Enabled"));
-		bIsVClipEnabled = true;
-	}
-
-	EnableVclipSettings();
-}
-
-// Toggle player settings depending on Vclip
-void ABlasterCharacter::EnableVclipSettings()
-{
-	if (GEngine)
-	{
-		const FString Authority = HasAuthority() ? TEXT("Server") : TEXT("Client");
-		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow,
-		                                 FString::Printf(TEXT("EnableVclipSettings called - %s"), *Authority));
-	}
-
-	UCharacterMovementComponent* MoveComp = GetCharacterMovement();
-
-	if (MoveComp)
-	{
-		if (bIsVClipEnabled == false)
 		{
-			// Restore capsule collision
-			GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-			GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
-			// Restore camera collision
-			CameraBoom->bDoCollisionTest = true;
-			// Restore movement
-			MoveComp->SetMovementMode(MOVE_Walking);
-		}
-		else
-		{
-			// Enable vclip
-			GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-			GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Ignore);
-			CameraBoom->bDoCollisionTest = false;
-			MoveComp->SetMovementMode(MOVE_Flying);
+			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, TEXT("EnhancedInputComponent not found!"));
 		}
 	}
 }
@@ -187,11 +186,9 @@ void ABlasterCharacter::PostInitializeComponents()
 }
 
 
-// Called when the game starts or when spawned
-void ABlasterCharacter::BeginPlay()
-{
-	Super::BeginPlay();
-}
+///////////////////////////////////////////////
+/// Movement functions
+//////////////////////////////
 
 void ABlasterCharacter::Move(const FInputActionValue& Value)
 {
@@ -249,7 +246,6 @@ void ABlasterCharacter::StartCrouch(const FInputActionValue& Value)
 	{
 		Crouch();
 	}
-
 }
 
 void ABlasterCharacter::StopCrouch(const FInputActionValue& Value)
@@ -288,6 +284,75 @@ void ABlasterCharacter::EquipButtonPressed(const FInputActionValue& Value)
 		ServerEquipButtonPressed();
 	}
 }
+
+void ABlasterCharacter::AimButtonPressed(const FInputActionValue& Value)
+{
+	if (Combat)
+	{
+		Combat->SetAiming(true);
+	}
+}
+
+void ABlasterCharacter::AimButtonReleased(const FInputActionValue& Value)
+{
+	if (Combat)
+	{
+		Combat->SetAiming(false);
+	}
+}
+
+
+/////////////////////////////////////////////////////
+/// RPC (run on authoritative machine/ server)
+///////////////////////////
+
+
+void ABlasterCharacter::ServerEquipButtonPressed_Implementation()
+{
+	if (Combat)
+	{
+		Combat->EquipWeapon(OverlappingWeapon);
+	}
+}
+
+
+// Implementation of ServerVClipRPC()
+void ABlasterCharacter::ServerVClipRPC_Implementation()
+{
+	if (GEngine)
+	{
+		const FString Authority = HasAuthority() ? TEXT("Server") : TEXT("Client");
+		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow,
+		                                 FString::Printf(TEXT("RPC called - %s"), *Authority));
+	}
+
+	// Toggle on or off
+	if (bIsVClipEnabled)
+	{
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, TEXT("Flying Disabled"));
+		}
+		bIsVClipEnabled = false;
+	}
+	else
+	{
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green, TEXT("Flying Enabled"));
+		}
+		bIsVClipEnabled = true;
+	}
+
+	// Change Actor's settings on the server
+	EnableVclipSettings();
+}
+
+
+/////////////////////////////////////////////////////////////
+/// Replication Notify/ On Replication Callback Functions
+/////////////////////////////////////
+
 
 void ABlasterCharacter::OnRep_OverlappingWeapon(AWeapon* LastWeaponBeforeReplication)
 {
@@ -328,6 +393,68 @@ void ABlasterCharacter::OnRep_vClip()
 }
 
 
+//////////////////////////////
+/// Vclip
+//////////////////
+
+// Vclip can be called on either server on client
+void ABlasterCharacter::vclip()
+{
+	if (GEngine)
+	{
+		const FString Authority = HasAuthority() ? TEXT("Server") : TEXT("Client");
+		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow,
+		                                 FString::Printf(TEXT("VClip called - %s"), *Authority));
+	}
+
+	// Either Case of Client or server calling this function: call RPC to Server
+	// I think if we are server it just doesnt send the rpc and executes on the server (doesnt traverse network since sending to itself)
+	ServerVClipRPC();
+}
+
+
+// Toggle player settings depending on Vclip
+// Called after vclip Rpc on server and clients (via replicate notify)
+void ABlasterCharacter::EnableVclipSettings()
+{
+	if (GEngine)
+	{
+		const FString Authority = HasAuthority() ? TEXT("Server") : TEXT("Client");
+		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow,
+		                                 FString::Printf(TEXT("EnableVclipSettings called - %s"), *Authority));
+	}
+
+	UCharacterMovementComponent* MoveComp = GetCharacterMovement();
+
+	if (MoveComp)
+	{
+		if (bIsVClipEnabled == false)
+		{
+			// Restore capsule collision
+			GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+			GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
+			// Restore camera collision
+			CameraBoom->bDoCollisionTest = true;
+			// Restore movement
+			MoveComp->SetMovementMode(MOVE_Walking);
+		}
+		else
+		{
+			// Enable vclip
+			GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Ignore);
+			CameraBoom->bDoCollisionTest = false;
+			MoveComp->SetMovementMode(MOVE_Flying);
+		}
+	}
+}
+
+
+///////////////////////////
+/// Setters
+/////////////////
+
+
 // OnSphereOverlapp only gets called on the server, which is calling this function
 // Therefore the machine running this code IS THE SERVER
 // ONLY RUN ON THE SERVER
@@ -354,6 +481,10 @@ void ABlasterCharacter::SetOverlappingWeapon(AWeapon* Weapon)
 	}
 }
 
+///////////////////////////
+/// Getters
+/////////////////
+
 bool ABlasterCharacter::IsWeaponEquipped()
 {
 	// We have access to the combat component(since we are friend in combatcomponent.h)
@@ -367,73 +498,8 @@ bool ABlasterCharacter::IsWeaponEquipped()
 	return (Combat && Combat->EquippedWeapon);
 }
 
-void ABlasterCharacter::ServerEquipButtonPressed_Implementation()
+// Get if we are aiming via the combat component
+bool ABlasterCharacter::IsAiming()
 {
-	if (Combat)
-	{
-		Combat->EquipWeapon(OverlappingWeapon);
-	}
-	return;
-}
-
-
-// Called to bind functionality to input
-void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
-
-
-	// Initialize Enhanced Input actions, and bind to the functions
-	//https://dev.epicgames.com/community/learning/tutorials/eD13/unreal-engine-enhanced-input-in-ue5
-	//https://dev.epicgames.com/documentation/en-us/unreal-engine/enhanced-input-in-unreal-engine?application_version=5.5
-
-	// Stolen from third person template
-
-	// Add Input Mapping Context
-	if (APlayerController* PlayerController = Cast<APlayerController>(GetController()))
-	{
-		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<
-			UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
-		{
-			Subsystem->AddMappingContext(InputMapping, 0);
-			//https://dev.epicgames.com/documentation/en-us/unreal-engine/enhanced-input-in-unreal-engine
-			// When you add an Input Mapping Context to the Enhanced Input subsystem, you can also give it priority. If you have multiple contexts mapped to the same Input Action, then, when the Input Action is triggered, the context with the highest priority will be considered and the others ignored.
-			// Give higher priority to mouse look thank using gamepad
-			//Subsystem->AddMappingContext(InputMappingMouse, 1);
-		}
-	}
-
-	// Set up action bindings
-	// The input action listeners will callback our function we bind when the event is triggered
-	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
-	{
-		// Jumping
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Ongoing, this, &ABlasterCharacter::JumpHeld);
-
-
-		// Moving
-		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ABlasterCharacter::Move);
-
-		// Looking
-		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ABlasterCharacter::Look);
-
-		// Crouching
-		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &ABlasterCharacter::StartCrouch);
-		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Completed, this,
-		                                   &ABlasterCharacter::StopCrouch);
-		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Ongoing, this, &ABlasterCharacter::CrouchHeld);
-
-		//Equip
-		EnhancedInputComponent->BindAction(EquipAction, ETriggerEvent::Started, this,
-		                                   &ABlasterCharacter::EquipButtonPressed);
-	}
-	else
-	{
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, TEXT("EnhancedInputComponent not found!"));
-		}
-	}
+	return (Combat && Combat->bAiming);
 }

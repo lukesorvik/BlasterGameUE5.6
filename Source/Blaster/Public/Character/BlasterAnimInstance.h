@@ -44,9 +44,11 @@ private:
 	UPROPERTY(BluePrintReadOnly, Category = Character, meta = (AllowPrivateAccess = "true"))
 	bool bIsCrouching;
 
-	UPROPERTY(BluePrintReadOnly, Category = Character, meta = (AllowPrivateAccess = "true"))
-	bool bWeaponEquipped; // Check if we have a weapon currently equipped
+	// Check if we have a weapon currently equipped
 	// Replicated via from CombatComponent, BlasterCharacter->isWeaponEquipped() returns the value, Native update animation updates value using blaster character func
+	UPROPERTY(BluePrintReadOnly, Category = Character, meta = (AllowPrivateAccess = "true"))
+	bool bWeaponEquipped; 
 
-
+	UPROPERTY(BluePrintReadOnly, Category = Character, meta = (AllowPrivateAccess = "true"))
+	bool bAiming; 
 };

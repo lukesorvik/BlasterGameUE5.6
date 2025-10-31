@@ -33,15 +33,24 @@ public:
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
+	void SetAiming(bool bIsAiming);
 
+	// RPC with parameter to send
+	// RPC's can have input parameters
+	UFUNCTION(SERVER,Reliable)
+	void ServerSetAiming(bool bIsAiming);
+
+// ABlasterCharacter has access to private members since friend
 private:
+	class ABlasterCharacter* BlasterCharacter;
+	
 	// Replicate EquippedWeapon property for each pawn, Server -> Clients, so all clients match authoritative
 	UPROPERTY(Replicated)
 	class AWeapon* EquippedWeapon;
-	
-	class ABlasterCharacter* BlasterCharacter;
 
+	// Replicate this variable to all clients
+	UPROPERTY(Replicated)
+	bool bAiming;
 	
 
-public:
 };
